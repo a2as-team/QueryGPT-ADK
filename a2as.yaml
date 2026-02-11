@@ -1,0 +1,382 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: shrijeeth/querygpt-adk
+    source: https://github.com/shrijeeth/querygpt-adk
+    branch: main
+    commit: "91305784"
+    scope: [backend/agents/query_agent/agent.py, backend/agents/query_agent/sub_agents/__init__.py, backend/agents/query_agent/sub_agents/column_selection_agent/agent.py,
+      backend/agents/query_agent/sub_agents/column_selection_agent/prompts.py, backend/agents/query_agent/sub_agents/query_explanation_agent/agent.py,
+      backend/agents/query_agent/sub_agents/query_explanation_agent/prompts.py, backend/agents/query_agent/sub_agents/query_explanation_agent/tools.py,
+      backend/agents/query_agent/sub_agents/query_formation_agent/agent.py, backend/agents/query_agent/sub_agents/query_formation_agent/prompts.py,
+      backend/agents/query_agent/sub_agents/query_validation_agent/agent.py, backend/agents/query_agent/sub_agents/query_validation_agent/prompts.py,
+      backend/agents/query_agent/sub_agents/query_validation_agent/tools.py, backend/agents/query_agent/sub_agents/table_agent/agent.py,
+      backend/agents/query_agent/sub_agents/table_agent/prompts.py, backend/agents/query_agent/sub_agents/table_agent/tools.py,
+      backend/agents/sql_data_generation_agent/agent.py, backend/agents/sql_data_generation_agent/sub_agents/__init__.py,
+      backend/agents/sql_data_generation_agent/sub_agents/sql_query_generation_agent/agent.py, backend/agents/sql_data_generation_agent/sub_agents/sql_query_generation_agent/prompts.py,
+      backend/agents/sql_data_generation_agent/sub_agents/sql_query_generation_agent/types.py, backend/agents/sql_table_describer_agent/agent.py,
+      backend/agents/sql_table_describer_agent/sub_agents/__init__.py, backend/agents/sql_table_describer_agent/sub_agents/table_count_check_agent/agent.py,
+      backend/agents/sql_table_describer_agent/sub_agents/table_description_agent/agent.py, backend/agents/sql_table_describer_agent/sub_agents/table_description_agent/prompts.py,
+      backend/agents/sql_table_describer_agent/sub_agents/table_description_agent/types.py, backend/routes.py, backend/scripts/generate_sample_queries.py,
+      backend/scripts/generate_tables_json.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:38:27Z'
+    url: https://a2as.org/certified/agents/shrijeeth/querygpt-adk
+  signatures:
+    digest: sha256:ibKkvqYyimbGqfK7Hx5D8vYY_-DkOazcN0gQHMdU4KA
+    key: ed25519:RH28EJn6wwL6Dust1_03TQl-KfvwuIWgY6mSBtD27ZM
+    sig: ed25519:ZJccXxb6ZiNmirH7lftTReJD9HWdRNsYR1kEHDToFDHgWzmYPGeXORtvBWJSiv0RlQcVUN5STjeHN5j8wRlECw
+
+agents:
+  root_agent.0:
+    type: instance
+    params:
+      name: query_agent
+      max_iterations: "3"
+      sub_agents: [sequential_agent, query_validation_agent, validate_query_status_check]
+      instance: root_agent
+  root_agent.1:
+    type: instance
+    models: [AGENT_MODEL]
+    tools: [get_similar_tables_tool]
+    params:
+      name: table_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=2)
+      output_key: tables
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.LLM_TEMPERATURE
+      instance: root_agent
+  root_agent.10:
+    type: instance
+    params:
+      name: sql_data_generation_agent
+      max_iterations: "1"
+      instance: root_agent
+      sub_agents: [sql_query_generation_agent]
+  root_agent.2:
+    type: instance
+    models: [AGENT_MODEL]
+    params:
+      name: query_formation_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=2)
+      output_key: generated_query
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.LLM_TEMPERATURE
+      instance: root_agent
+  root_agent.3:
+    type: instance
+    models: [AGENT_MODEL]
+    tools: [validate_sql_query_tool]
+    params:
+      name: query_validation_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=1)
+      output_key: validation_result
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.LLM_TEMPERATURE
+      instance: root_agent
+  root_agent.4:
+    type: instance
+    models: [AGENT_MODEL]
+    tools: [get_similar_queries_tool]
+    params:
+      name: query_explanation_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=2)
+      output_key: query_explanation
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.LLM_TEMPERATURE
+      instance: root_agent
+  root_agent.5:
+    type: instance
+    models: [AGENT_MODEL]
+    params:
+      name: sql_query_generation_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=1)
+      output_key: sql_generated_queries
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.SYNTHETIC_DATA_LLM_TEMPERATURE
+      output_schema: SampleQuerySchema
+      instance: root_agent
+  root_agent.6:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: validate_table_count
+      instance: root_agent
+  root_agent.7:
+    type: instance
+    models: [AGENT_MODEL]
+    params:
+      name: column_selection_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=2)
+      output_key: selected_columns
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.LLM_TEMPERATURE
+      instance: root_agent
+  root_agent.8:
+    type: instance
+    params:
+      name: sql_table_describer_agent
+      max_iterations: "3"
+      instance: root_agent
+      sub_agents: [table_description_agent, table_count_check_agent]
+  root_agent.9:
+    type: instance
+    models: [AGENT_MODEL]
+    params:
+      name: sql_table_describer_agent
+      description: agent_description(version=1)
+      instruction: agent_instruction(version=1)
+      output_key: sql_table_description
+      generate_content_config:
+        class: GenerateContentConfig
+        temperature: get_settings.SYNTHETIC_DATA_LLM_TEMPERATURE
+      output_schema: TableDescriptionSchema
+      instance: root_agent
+  sequential_agent:
+    type: instance
+    params:
+      name: query_generator_agent
+      sub_agents: [query_explanation_agent, table_agent, column_selection_agent, query_formation_agent]
+  validate_query_status_check:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: validate_query_status_check
+
+models:
+  AGENT_MODEL:
+    type: literal
+    agents: [root_agent.1, root_agent.2, root_agent.3, root_agent.4, root_agent.5, root_agent.7, root_agent.9]
+  gemini-2.5-flash:
+    type: default
+    agents: [root_agent.6, validate_query_status_check]
+
+tools:
+  column_selection_agent_tool:
+    type: agent
+    params:
+      wrapper: AgentTool
+  get_similar_queries_tool:
+    type: function
+    agents: [root_agent.4]
+    params:
+      module: tools.get_similar_queries_tool
+  get_similar_tables_tool:
+    type: function
+    agents: [root_agent.1]
+    params:
+      module: tools.get_similar_tables_tool
+  query_explanation_agent_tool:
+    type: agent
+    params:
+      wrapper: AgentTool
+  query_formation_agent_tool:
+    type: agent
+    params:
+      wrapper: AgentTool
+  table_agent_tool:
+    type: agent
+    params:
+      wrapper: AgentTool
+  validate_sql_query_tool:
+    type: function
+    agents: [root_agent.3]
+    params:
+      module: tools.validate_sql_query_tool
+
+teams:
+  root_agent:
+    type: loop
+    agents: [root_agent, sequential_agent, query_validation_agent, validate_query_status_check]
+  root_agent.10:
+    type: loop
+    agents: [root_agent.10, sql_query_generation_agent]
+  root_agent.8:
+    type: loop
+    agents: [root_agent.8, table_description_agent, table_count_check_agent]
+  sequential_agent:
+    type: sequential
+    agents: [sequential_agent, query_explanation_agent, table_agent, column_selection_agent, query_formation_agent]
+
+imports:
+  ACCESS_TOKEN_EXPIRE_MINUTES: auth.ACCESS_TOKEN_EXPIRE_MINUTES
+  agent: agent
+  agent_description: prompts.agent_description
+  agent_instruction: prompts.agent_instruction
+  AgentTool: google.adk.tools.agent_tool.AgentTool
+  APIRouter: fastapi.APIRouter
+  AsyncGenerator: typing.AsyncGenerator
+  asyncio: asyncio
+  AsyncSession: sqlalchemy.ext.asyncio.AsyncSession
+  authenticate_user: auth.authenticate_user
+  BaseAgent: google.adk.agents.BaseAgent
+  BaseModel: pydantic.BaseModel
+  column_selection_agent: column_selection_agent.agent.root_agent
+  CORSMiddleware: fastapi.middleware.cors.CORSMiddleware
+  create_access_token: auth.create_access_token
+  Depends: fastapi.Depends
+  EmailStr: pydantic.EmailStr
+  embedding: litellm.embedding
+  Event: google.adk.events.Event
+  EventActions: google.adk.events.EventActions
+  FastAPI: fastapi.FastAPI
+  FieldCondition: qdrant_client.models.FieldCondition
+  Filter: qdrant_client.models.Filter
+  FunctionTool: google.adk.tools.FunctionTool
+  get_current_active_user: auth.get_current_active_user
+  get_db: database.get_db
+  get_password_hash: auth.get_password_hash
+  get_settings: config.get_settings
+  get_validate_db_mysql_connection: utils.helpers.get_validate_db_mysql_connection
+  get_validate_db_postgres_connection: utils.helpers.get_validate_db_postgres_connection
+  HTTPException: fastapi.HTTPException
+  InMemorySessionService: google.adk.sessions.InMemorySessionService
+  IntegrityError: sqlalchemy.exc.IntegrityError
+  InvocationContext: google.adk.agents.invocation_context.InvocationContext
+  is_account_locked: middleware.account_lockout.is_account_locked
+  json: json
+  LiteLlm: google.adk.models.lite_llm.LiteLlm
+  LlmAgent: google.adk.agents.LlmAgent
+  LoopAgent: google.adk.agents.LoopAgent
+  MatchValue: qdrant_client.models.MatchValue
+  MySQLError: mysql.connector.Error
+  OAuth2PasswordRequestForm: fastapi.security.OAuth2PasswordRequestForm
+  os: os
+  parse_json_markdown: utils.helpers.parse_json_markdown
+  PostgresError: psycopg2.Error
+  QdrantClient: qdrant_client.QdrantClient
+  query_explanation_agent: query_explanation_agent.agent.root_agent
+  query_formation_agent: query_formation_agent.agent.root_agent
+  query_validation_agent: query_validation_agent.agent.root_agent
+  QueryRequest: schemas.query_schemas.QueryRequest
+  RateLimitMiddleware: middleware.rate_limit.RateLimitMiddleware
+  record_failed_login: middleware.account_lockout.record_failed_login
+  Request: fastapi.Request
+  reset_failed_logins: middleware.account_lockout.reset_failed_logins
+  root_agent: agents.sql_table_describer_agent.agent.root_agent
+  router: routes.router
+  Runner: google.adk.Runner
+  SampleQuerySchema: types.SampleQuerySchema
+  select: sqlalchemy.future.select
+  SequentialAgent: google.adk.agents.SequentialAgent
+  sql_query_generation_agent: sub_agents.sql_query_generation_agent
+  status: fastapi.status
+  table_agent: table_agent.agent.root_agent
+  table_count_check_agent: sub_agents.table_count_check_agent
+  table_description_agent: sub_agents.table_description_agent
+  TableDescriptionSchema: types.TableDescriptionSchema
+  time: time
+  timedelta: datetime.timedelta
+  Token: auth.Token
+  tools: tools
+  types: google.genai.types
+  UserModel: models.User
+  uvicorn: uvicorn
+
+functions:
+  _run_async_impl:
+    type: async
+    module: backend.agents.sql_table_describer_agent.sub_agents.table_count_check_agent.agent
+    args: [self, ctx]
+    params:
+      returns: AsyncGenerator
+  agent_description:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_validation_agent.prompts
+    args: [version]
+  agent_instruction:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_validation_agent.prompts
+    args: [version]
+  get_similar_queries:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_explanation_agent.tools
+    args: [user_input, score_threshold]
+    params:
+      returns: str
+  get_similar_tables:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.table_agent.tools
+    args: [user_input, similar_queries, score_threshold]
+    params:
+      returns: str
+  login:
+    type: async
+    module: backend.routes
+    args: [form_data, db]
+  main:
+    type: async
+    module: backend.scripts.generate_tables_json
+  profile:
+    type: async
+    module: backend.routes
+    args: [user]
+  register:
+    type: async
+    module: backend.routes
+    args: [user, db]
+  run_query:
+    type: async
+    module: backend.routes
+    args: [request, user]
+  validate_sql_query:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_validation_agent.tools
+    args: [query]
+    params:
+      returns: dict
+  validate_sql_query_mysql:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_validation_agent.tools
+    args: [query]
+    params:
+      returns: tuple
+  validate_sql_query_postgres:
+    type: sync
+    module: backend.agents.query_agent.sub_agents.query_validation_agent.tools
+    args: [query]
+    params:
+      returns: tuple
+  validate_token:
+    type: async
+    module: backend.routes
+    args: [request, db, user]
+
+files:
+  out_path:
+    type: variable
+    actions: [read, write]
+    params:
+      caller: [os.path.dirname, open]
+  sample_queries.json:
+    type: pattern
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      pattern: [os.path.dirname(), data, sample_queries.json]
+  tables.json:
+    type: pattern
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      pattern: [os.path.dirname(), data, tables.json]
+  tables_file:
+    type: variable
+    actions: [read]
+    params:
+      caller: [open, json.load]
+      alias: [f]
